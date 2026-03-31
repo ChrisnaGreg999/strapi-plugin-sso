@@ -1,6 +1,6 @@
 import axios from 'axios';
-import {Buffer} from 'buffer';
-import {randomUUID, getRandomValues} from 'node:crypto';
+import { Buffer } from 'buffer';
+import { randomUUID, getRandomValues } from 'node:crypto';
 import pkceChallenge from "pkce-challenge";
 
 const configValidation = () => {
@@ -27,6 +27,12 @@ const OAUTH_SCOPE = 'https://www.googleapis.com/auth/userinfo.email https://www.
  * @return {Promise<*>}
  */
 async function googleSignIn(ctx) {
+  const jwtToken = ctx.cookies.get('jwtToken');
+  if (jwtToken) {
+    ctx.set('Location', strapi.config.admin.url);
+    return ctx.send({}, 302);
+  }
+
   const config = configValidation()
 
   // Generate code verifier and code challenge

@@ -1,8 +1,8 @@
 import strapiUtils from "@strapi/utils";
 import generator from "generate-password";
-import {randomUUID} from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 
-export default ({strapi}) => ({
+export default ({ strapi }) => ({
   async createUser(email, lastname, firstname, locale, roles = []) {
     // If the email address contains uppercase letters, convert it to lowercase and retrieve it from the DB. If not, register a new email address with a lower-case email address.
     const userService = strapi.service("admin::user");
@@ -25,7 +25,7 @@ export default ({strapi}) => ({
       registrationToken: createdUser.registrationToken,
       userInfo: {
         firstname: firstname ? firstname : "unset",
-        lastname: lastname ? lastname : "user",
+        lastname: lastname ? lastname : "",
         password: generator.generate({
           length: 43, // 256 bits (https://en.wikipedia.org/wiki/Password_strength#Random_passwords)
           numbers: true,
@@ -87,6 +87,9 @@ export default ({strapi}) => ({
     const REMEMBER_ME = config["REMEMBER_ME"];
     const isRememberMe = !!REMEMBER_ME
 
+    const authDomain = strapi.config.get("admin.auth.domain");
+    const cookieDomain = authDomain ? `; Domain=${authDomain}` : '';
+
     return `
 <!doctype html>
 <html>
@@ -99,7 +102,7 @@ export default ({strapi}) => ({
   if(${isRememberMe}){
     localStorage.setItem('jwtToken', '"${jwtToken}"');
   }else{
-    document.cookie = 'jwtToken=${encodeURIComponent(jwtToken)}; Path=/';
+    document.cookie = 'jwtToken=${encodeURIComponent(jwtToken)}; Path=/ ${cookieDomain}';
   }
   localStorage.setItem('isLoggedIn', 'true');
   location.href = '${strapi.config.admin.url}'
@@ -135,7 +138,7 @@ export default ({strapi}) => ({
     const REMEMBER_ME = config["REMEMBER_ME"]
     const rememberMe = !!REMEMBER_ME
 
-    const {token: refreshToken} = await sessionManager(
+    const { token: refreshToken } = await sessionManager(
       'admin'
     ).generateRefreshToken(userId, deviceId, {
       type: rememberMe ? 'refresh' : 'session',
@@ -143,14 +146,15 @@ export default ({strapi}) => ({
 
     // TODO: reference the Configuration   values
     // https://github.com/strapi/strapi/pull/24346/files#diff-c27336b21ee5785523f7fc802899a5d405da67d12c837c498c4766cb04a50b9aR64
-    const cookieOptions = {}
+    const authDomain = strapi.config.get("admin.auth.domain");
+    const cookieOptions = authDomain ? { domain: authDomain } : {};
     ctx.cookies.set('strapi_admin_refresh', refreshToken, cookieOptions);
 
     const accessResult = await sessionManager('admin').generateAccessToken(refreshToken);
     if ('error' in accessResult) {
       throw new Error(accessResult.error);
     }
-    const {token: accessToken} = accessResult;
+    const { token: accessToken } = accessResult;
     return accessToken;
   }
 });

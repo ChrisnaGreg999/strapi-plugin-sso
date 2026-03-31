@@ -1,22 +1,27 @@
 import axios from 'axios';
-import {Buffer} from 'buffer';
+import { Buffer } from 'buffer';
 import { randomUUID, getRandomValues } from 'node:crypto';
 import pkceChallenge from "pkce-challenge";
 
 const configValidation = () => {
   const config = strapi.config.get('plugin::strapi-plugin-sso')
   if (config['OIDC_CLIENT_ID'] && config['OIDC_CLIENT_SECRET']
-      && config['OIDC_REDIRECT_URI'] && config['OIDC_SCOPES']
-      && config['OIDC_TOKEN_ENDPOINT'] && config['OIDC_USER_INFO_ENDPOINT']
-      && config['OIDC_GRANT_TYPE'] && config['OIDC_FAMILY_NAME_FIELD']
-      && config['OIDC_GIVEN_NAME_FIELD'] && config['OIDC_AUTHORIZATION_ENDPOINT']
-      ) {
+    && config['OIDC_REDIRECT_URI'] && config['OIDC_SCOPES']
+    && config['OIDC_TOKEN_ENDPOINT'] && config['OIDC_USER_INFO_ENDPOINT']
+    && config['OIDC_GRANT_TYPE'] && config['OIDC_FAMILY_NAME_FIELD']
+    && config['OIDC_GIVEN_NAME_FIELD'] && config['OIDC_AUTHORIZATION_ENDPOINT']
+  ) {
     return config
   }
   throw new Error('OIDC_AUTHORIZATION_ENDPOINT,OIDC_TOKEN_ENDPOINT, OIDC_USER_INFO_ENDPOINT,OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_REDIRECT_URI, and OIDC_SCOPES are required')
 }
 
 const oidcSignIn = async (ctx) => {
+  const jwtToken = ctx.cookies.get('jwtToken');
+  if (jwtToken) {
+    ctx.set('Location', strapi.config.admin.url);
+    return ctx.send({}, 302);
+  }
   let { state } = ctx.query;
   const { OIDC_CLIENT_ID, OIDC_REDIRECT_URI, OIDC_SCOPES, OIDC_AUTHORIZATION_ENDPOINT } = configValidation();
 
@@ -94,7 +99,7 @@ const oidcSignInCallback = async (ctx) => {
       userInfoEndpointHeaders
     );
 
-    const email =  userResponse.data.email
+    const email = userResponse.data.email
 
     // whitelist check
     await whitelistService.checkWhitelistForEmail(email)

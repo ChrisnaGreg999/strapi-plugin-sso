@@ -6,6 +6,12 @@
 
 This plugin can provide single sign-on.
 
+# Purpose of Forking
+
+- Read the custom domain for `jwtToken` from Strapi configuration.
+- Check for an existing `jwtToken` before initiating the SSO flow to avoid unnecessary redirects.
+
+
 You will be able to log in to the administration screen using one of the following providers:
 
 - Google
