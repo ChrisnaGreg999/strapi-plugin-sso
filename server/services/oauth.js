@@ -87,9 +87,6 @@ export default ({ strapi }) => ({
     const REMEMBER_ME = config["REMEMBER_ME"];
     const isRememberMe = !!REMEMBER_ME
 
-    const authDomain = strapi.config.get("admin.auth.domain");
-    const cookieDomain = authDomain ? `; Domain=${authDomain}` : '';
-
     return `
 <!doctype html>
 <html>
@@ -102,7 +99,7 @@ export default ({ strapi }) => ({
   if(${isRememberMe}){
     localStorage.setItem('jwtToken', '"${jwtToken}"');
   }else{
-    document.cookie = 'jwtToken=${encodeURIComponent(jwtToken)}; Path=/ ${cookieDomain}';
+    document.cookie = 'jwtToken=${encodeURIComponent(jwtToken)}; Path=/';
   }
   localStorage.setItem('isLoggedIn', 'true');
   location.href = '${strapi.config.admin.url}'
@@ -146,8 +143,7 @@ export default ({ strapi }) => ({
 
     // TODO: reference the Configuration   values
     // https://github.com/strapi/strapi/pull/24346/files#diff-c27336b21ee5785523f7fc802899a5d405da67d12c837c498c4766cb04a50b9aR64
-    const authDomain = strapi.config.get("admin.auth.domain");
-    const cookieOptions = authDomain ? { domain: authDomain } : {};
+    const cookieOptions = {}
     ctx.cookies.set('strapi_admin_refresh', refreshToken, cookieOptions);
 
     const accessResult = await sessionManager('admin').generateAccessToken(refreshToken);
