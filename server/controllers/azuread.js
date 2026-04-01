@@ -31,8 +31,11 @@ const OAUTH_RESPONSE_TYPE = "code";
 async function azureAdSignIn(ctx) {
   const jwtToken = ctx.cookies.get('jwtToken');
   if (jwtToken) {
-    ctx.set('Location', strapi.config.admin.url);
-    return ctx.send({}, 302);
+    const { isValid } = strapi.sessionManager('admin').validateAccessToken(jwtToken);
+    if (isValid) {
+      ctx.set('Location', strapi.config.admin.url);
+      return ctx.send({}, 302);
+    }
   }
 
   const config = configValidation();

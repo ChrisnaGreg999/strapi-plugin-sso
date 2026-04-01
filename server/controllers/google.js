@@ -29,8 +29,11 @@ const OAUTH_SCOPE = 'https://www.googleapis.com/auth/userinfo.email https://www.
 async function googleSignIn(ctx) {
   const jwtToken = ctx.cookies.get('jwtToken');
   if (jwtToken) {
-    ctx.set('Location', strapi.config.admin.url);
-    return ctx.send({}, 302);
+    const { isValid } = strapi.sessionManager('admin').validateAccessToken(jwtToken);
+    if (isValid) {
+      ctx.set('Location', strapi.config.admin.url);
+      return ctx.send({}, 302);
+    }
   }
 
   const config = configValidation()
