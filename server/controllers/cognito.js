@@ -1,6 +1,6 @@
 import axios from 'axios';
-import {Buffer} from 'buffer';
-import {randomUUID, getRandomValues} from 'node:crypto';
+import { Buffer } from 'buffer';
+import { randomUUID, getRandomValues } from 'node:crypto';
 import pkceChallenge from "pkce-challenge";
 
 const configValidation = () => {
@@ -28,6 +28,15 @@ const OAUTH_SCOPE = 'openid email profile'
 const OAUTH_RESPONSE_TYPE = 'code'
 
 async function cognitoSignIn(ctx) {
+  const jwtToken = ctx.cookies.get('jwtToken');
+  if (jwtToken) {
+    const { isValid } = strapi.sessionManager('admin').validateAccessToken(jwtToken);
+    if (isValid) {
+      ctx.set('Location', strapi.config.admin.url);
+      return ctx.send({}, 302);
+    }
+  }
+
   const config = configValidation()
   const endpoint = OAUTH_ENDPOINT(config['COGNITO_OAUTH_DOMAIN'], config['COGNITO_OAUTH_REGION'])
 
